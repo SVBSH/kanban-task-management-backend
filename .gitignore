@@ -1,4 +1,9 @@
-# Logs
+.idea/
+.vscode/
+node_modules/
+build/
+tmp/
+temp/# Logs
 logs
 *.log
 npm-debug.log*
