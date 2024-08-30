@@ -1,4 +1,13 @@
-const { Board, User, TaskGroup, Sequelize, sequelize } = require("../models");
+const {
+  Board,
+  User,
+  TaskGroup,
+  Sequelize,
+  sequelize,
+  BoardUser,
+  Subtask,
+  Task,
+} = require("../models");
 
 exports.getAllBoards = async (req, res) => {
   try {
@@ -9,6 +18,46 @@ exports.getAllBoards = async (req, res) => {
       .status(500)
       .json({ message: "Error retrieving boards", error: error.message });
   }
+};
+
+exports.getInitialBoards = async (req, res) => {
+  const userId = req.params.user;
+  const userBoards = await BoardUser.findAll({
+    where: { userId: userId },
+    include: [
+      {
+        model: Board,
+        include: [
+          {
+            model: TaskGroup,
+            include: [
+              {
+                model: Task,
+                include: Subtask,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  console.log(userBoards);
+
+  res.json(userBoards);
+  return;
+  // try {
+  //   const userId = User.findByPk(userId)
+
+  // }
+
+  // try {
+  //   const boards = await Board.findAll();
+  //   res.json(boards);
+  // } catch (error) {
+  //   res
+  //     .status(500)
+  //     .json({ message: "Error retrieving boards", error: error.message });
+  // }
 };
 
 exports.getBoard = async (req, res) => {
