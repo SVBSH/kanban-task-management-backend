@@ -2,17 +2,35 @@ const {
   Board,
   User,
   TaskGroup,
-  Sequelize,
   sequelize,
   BoardUser,
   Subtask,
   Task,
 } = require("../models");
 
-exports.getAllBoards = async (req, res) => {
+exports.getInitialBoards = async (req, res) => {
+  const { username, id } = req.user;
   try {
-    const boards = await Board.findAll();
-    res.json(boards);
+    const userBoards = await BoardUser.findAll({
+      where: { userId: id },
+      include: [
+        {
+          model: Board,
+          include: [
+            {
+              model: TaskGroup,
+              include: [
+                {
+                  model: Task,
+                  include: Subtask,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    res.json({ data: userBoards });
   } catch (error) {
     res
       .status(500)
@@ -20,52 +38,29 @@ exports.getAllBoards = async (req, res) => {
   }
 };
 
-exports.getInitialBoards = async (req, res) => {
-  const userId = req.params.user;
-  const userBoards = await BoardUser.findAll({
-    where: { userId: userId },
-    include: [
-      {
-        model: Board,
-        include: [
-          {
-            model: TaskGroup,
-            include: [
-              {
-                model: Task,
-                include: Subtask,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  });
-  console.log(userBoards);
+exports.getAllBoards = async (req, res) => {
+  const { username, id } = req.user;
 
-  res.json(userBoards);
-  return;
-  // try {
-  //   const userId = User.findByPk(userId)
-
-  // }
-
-  // try {
-  //   const boards = await Board.findAll();
-  //   res.json(boards);
-  // } catch (error) {
-  //   res
-  //     .status(500)
-  //     .json({ message: "Error retrieving boards", error: error.message });
-  // }
+  try {
+    const boards = await BoardUser.findAll({
+      where: { userId: id },
+      include: [
+        {
+          model: Board,
+        },
+      ],
+    });
+    res.json({ data: boards });
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving boards", error: error });
+  }
 };
 
+// Get single board
+// verify if user has access to this board
 exports.getBoard = async (req, res) => {
   const boardId = req.params.id;
-
-  if (!boardId) {
-    return res.status(400).json({ message: "Board ID parameter is missing." });
-  }
+  console.log("userId: ", req.user.username, req.user.id);
 
   try {
     const board = await Board.findByPk(boardId);
@@ -74,7 +69,7 @@ exports.getBoard = async (req, res) => {
       return res.status(404).json({ message: "Board not found." });
     }
 
-    res.json(board);
+    res.json({ data: board });
   } catch (error) {
     res
       .status(500)
@@ -84,18 +79,6 @@ exports.getBoard = async (req, res) => {
 
 exports.createBoard = async (req, res) => {
   const { name: boardName, columns: boardColumns } = req.body;
-
-  if (!boardName) {
-    return res
-      .status(400)
-      .json({ message: "Board name parameter is missing." });
-  }
-
-  if (!boardColumns || !Array.isArray(boardColumns)) {
-    return res
-      .status(400)
-      .json({ message: "Board columns parameter is missing or not an array." });
-  }
 
   const uniqueColumns = [...new Set(boardColumns)];
   if (uniqueColumns.length !== boardColumns.length) {
@@ -147,4 +130,31 @@ exports.createBoard = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+exports.getBoardInfo = async (req, res) => {
+  const userId = req.params.user;
+  const userBoards = await BoardUser.findAll({
+    where: { userId: userId },
+    include: [
+      {
+        model: Board,
+        include: [
+          {
+            model: TaskGroup,
+            include: [
+              {
+                model: Task,
+                include: Subtask,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  console.log(userBoards);
+
+  res.json(userBoards);
+  return;
 };

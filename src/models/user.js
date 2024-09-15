@@ -13,9 +13,14 @@ module.exports = (sequelize, DataTypes) => {
   }
   User.init(
     {
-      username: DataTypes.STRING,
-      password: DataTypes.STRING,
-      createdAt: DataTypes.DATE, // Uistite sa, že máte rovnaké názvy ako v databáze
+      username: {
+        type: DataTypes.STRING,
+      },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE,
     },
     {
