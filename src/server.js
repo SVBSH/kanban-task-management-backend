@@ -9,7 +9,6 @@ const morgan = require("morgan");
 require("dotenv/config");
 const { Server } = require("socket.io");
 
-const routeBoards = require("./routes/board.route.js");
 const router = require("./routes/router.js");
 
 const { protect } = require("./modules/auth/auth.js");

@@ -14,7 +14,7 @@ module.exports = {
       attributes: ["id"],
       where: {
         name: ["Platform Launch", "Marketing Plan"],
-        ownerId: user.id, // Predpokladáme, že ownerId je používané ako referencia na používateľa
+        ownerId: user.id,
       },
     });
 

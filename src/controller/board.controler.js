@@ -8,21 +8,74 @@ const {
   Task,
 } = require("../models");
 
+function getWholeBoardById(boardId, id) {
+  return BoardUser.findOne({
+    where: { userId: id },
+    attributes: ["role"],
+    include: [
+      {
+        model: Board,
+        where: { id: boardId },
+        attributes: ["id", "name"],
+        include: [
+          {
+            model: TaskGroup,
+            attributes: ["id", "name", "createdAt"],
+            include: [
+              {
+                model: Task,
+                attributes: ["id", "name", "createdAt"],
+                include: [
+                  {
+                    model: Subtask,
+                    attributes: [
+                      "id",
+                      "title",
+                      "taskId",
+                      "isCompleted",
+                      "createdAt",
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+}
+
 exports.getInitialBoards = async (req, res) => {
   const { username, id } = req.user;
   try {
-    const userBoards = await BoardUser.findAll({
+    const userBoards = await BoardUser.findOne({
       where: { userId: id },
+      attributes: ["role"],
       include: [
         {
           model: Board,
+          attributes: ["id", "name"],
           include: [
             {
               model: TaskGroup,
+              attributes: ["id", "name", "createdAt"],
               include: [
                 {
                   model: Task,
-                  include: Subtask,
+                  attributes: ["id", "name", "createdAt"],
+                  include: [
+                    {
+                      model: Subtask,
+                      attributes: [
+                        "id",
+                        "title",
+                        "taskId",
+                        "isCompleted",
+                        "createdAt",
+                      ],
+                    },
+                  ],
                 },
               ],
             },
@@ -38,19 +91,48 @@ exports.getInitialBoards = async (req, res) => {
   }
 };
 
-exports.getAllBoards = async (req, res) => {
+exports.apiGetWholeBoardById = async (req, res) => {
   const { username, id } = req.user;
+  const boardId = req.params.id;
+  console.log(req.params);
+
+  try {
+    const userBoards = await getWholeBoardById(boardId, id);
+    const formattedBoards = {
+      role: userBoards.role,
+      id: userBoards.Board.id,
+      name: userBoards.Board.name,
+      TaskGroups: userBoards.Board.TaskGroups,
+    };
+    res.json({ data: formattedBoards });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving boards", error: error.message });
+  }
+};
+
+exports.getAllBoards = async (req, res) => {
+  const { _, id } = req.user;
 
   try {
     const boards = await BoardUser.findAll({
       where: { userId: id },
+      attributes: ["role"],
       include: [
         {
           model: Board,
+          attributes: ["id", "name"],
         },
       ],
     });
-    res.json({ data: boards });
+
+    const formattedBoards = boards.map((boardUser) => ({
+      role: boardUser.role,
+      id: boardUser.Board.id,
+      name: boardUser.Board.name,
+    }));
+    res.json({ data: formattedBoards });
   } catch (error) {
     res.status(500).json({ message: "Error retrieving boards", error: error });
   }
@@ -132,6 +214,7 @@ exports.createBoard = async (req, res) => {
   }
 };
 
+// Get All
 exports.getBoardInfo = async (req, res) => {
   const userId = req.params.user;
   const userBoards = await BoardUser.findAll({

@@ -6,12 +6,14 @@ const { handleInputErrors } = require("../modules/middleware.js");
 
 router.get("/", boardController.getAllBoards);
 router.get("/initialLoad", boardController.getInitialBoards);
+router.get("/:id/all", boardController.apiGetWholeBoardById);
 
 router.get(
   "/:id",
   [param("id").notEmpty().isInt(), handleInputErrors],
   boardController.getBoard
 );
+
 // TODO: extrahovat
 router.post(
   "/",
